@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  orchestrator:
+    build: .
+    container_name: automation-orchestrator
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config:/app/config
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('fs').accessSync('/app/logs/combined.log')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

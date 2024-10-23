@@ -1,0 +1,15 @@
+logging:
+  file_path: "logs/orchestrator.log"
+  level: "INFO"
+
+database:
+  url: "data/tasks.db"
+
+tasks:
+  - name: "example_task"
+    module: "example"
+    class: "ExampleTask"
+    schedule: "*/15 * * * *"
+    enabled: true
+    config:
+      key: "value"
