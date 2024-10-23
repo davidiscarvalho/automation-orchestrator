@@ -6,10 +6,10 @@ database:
   url: "data/tasks.db"
 
 tasks:
-  - name: "example_task"
-    module: "example"
-    class: "ExampleTask"
+  - name: "random_commits"
+    module: "random-commits"
+    class: "RandomCommits"
     schedule: "*/15 * * * *"
     enabled: true
-    config:
-      key: "value"
+    config: {}
+ 
