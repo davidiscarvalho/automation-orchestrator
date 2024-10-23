@@ -11,5 +11,8 @@ tasks:
     class: "RandomCommits"
     schedule: "*/15 * * * *"
     enabled: true
-    config: {}
+    config:
+      repo_path: "https://github.com/davidiscarvalho/auto-commits.git"
+      git_username: "davidiscarvalho"
+      git_email: "davidscarvalho11@gmail.com"
  

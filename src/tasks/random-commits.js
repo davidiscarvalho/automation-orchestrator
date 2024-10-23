@@ -1,7 +1,7 @@
 const BaseTask = require('./base');
 const logger = require('../utils/logger');
-const fs = require('fs').promises;
 const path = require('path');
+const simpleGit = require('simple-git');
 
 class RandomCommits extends BaseTask {
   constructor(config) {
@@ -14,7 +14,8 @@ class RandomCommits extends BaseTask {
       4: 4,   // 4% chance of 4 commits
       5: 2    // 2% chance of 5 commits
     };
-    this.dummyFilePath = path.join(process.cwd(), 'data', 'dummy_file.txt');
+    this.repoPath = path.join(process.cwd(), 'data', 'git-repo');
+    this.git = simpleGit(this.repoPath);
   }
 
   getCommitCount() {
@@ -31,6 +32,27 @@ class RandomCommits extends BaseTask {
     return 1; // Default fallback
   }
 
+  async ensureRepoExists() {
+    try {
+      await this.git.checkIsRepo();
+    } catch {
+      logger.info('Initializing new git repository...');
+      await this.git.init();
+      await this.git.addConfig('user.name', process.env.GIT_USERNAME || 'Automation Bot');
+      await this.git.addConfig('user.email', process.env.GIT_EMAIL || 'bot@example.com');
+    }
+  }
+
+  async makeCommit(count) {
+    const timestamp = new Date().toISOString();
+    const filePath = path.join(this.repoPath, 'changes.txt');
+    const change = `Change ${count} at ${timestamp}\n`;
+    
+    await fs.promises.appendFile(filePath, change);
+    await this.git.add(filePath);
+    await this.git.commit(`RandomCommits: Change ${count} [${timestamp}]`);
+  }
+
   async run() {
     const commitCount = this.getCommitCount();
     logger.info(`RandomCommits task will make ${commitCount} commits`);
@@ -41,22 +63,19 @@ class RandomCommits extends BaseTask {
     }
 
     try {
-      // Ensure the data directory exists
-      await fs.mkdir(path.dirname(this.dummyFilePath), { recursive: true });
+      await this.ensureRepoExists();
 
-      // Make changes to the file
-      const timestamp = new Date().toISOString();
-      const change = `Change for commit ${commitCount} at ${timestamp}\n`;
-      await fs.appendFile(this.dummyFilePath, change);
-
-      const commitMessage = `RandomCommits: Commit ${commitCount}`;
-      logger.info(`Made changes for ${commitMessage}`);
+      const results = [];
+      for (let i = 0; i < commitCount; i++) {
+        await this.makeCommit(i + 1);
+        results.push(`Commit ${i + 1} completed`);
+      }
 
       return {
         commitCount,
-        commitMessage,
-        timestamp,
-        filePath: this.dummyFilePath
+        results,
+        timestamp: new Date().toISOString(),
+        repoPath: this.repoPath
       };
     } catch (error) {
       logger.error(`Error in RandomCommits task: ${error.message}`);
